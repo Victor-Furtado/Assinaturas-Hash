@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  documents    Document[] @relation("UploadedDocuments")
+}
+
+model Document {
+  id           String      @id @default(uuid())
+  name         String
+  fileName     String
+  storagePath  String
+  mimeType     String
+  docHash      String      // SHA-256 do binário
+  available    Boolean     @default(true)
+  uploadedById String
+  uploadedBy   User        @relation("UploadedDocuments", fields: [uploadedById], references: [id])
+  uploadedAt   DateTime    @default(now())
+  signedAt     DateTime?
+  signature    Signature?
+}
+
+model Signature {
+  id            String   @id @default(uuid())
+  documentId    String   @unique
+  document      Document @relation(fields: [documentId], references: [id])
+  signerCpf     String
+  signatureHash String
+  signedAt      DateTime @default(now())
+
+  @@index([signerCpf])
+}
