@@ -6,8 +6,15 @@ services:
     shm_size: 128mb
     env_file:
       - ./database/.env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d plataforma_assinatura"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     ports:
       - "5432:5432"
+    networks:
+      - appnet
 
   adminer:
     image: adminer
@@ -21,17 +28,15 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/plataforma_assinatura?schema=public
-      - JWT_SECRET=supersegredo
-      - JWT_EXPIRATION=1d
-      - UPLOAD_DIR=/app/uploads
+    env_file:
+      - ./backend/.env
     volumes:
       - backend_uploads:/app/uploads
     ports:
       - "3001:3001"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - appnet
 
