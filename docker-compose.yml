@@ -1,5 +1,4 @@
 services:
-
   db:
     image: postgres
     restart: always
@@ -13,6 +12,8 @@ services:
       retries: 5
     ports:
       - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
     networks:
       - appnet
 
@@ -32,6 +33,7 @@ services:
       - ./backend/.env
     volumes:
       - backend_uploads:/app/uploads
+      # - ./backend:/app
     ports:
       - "3001:3001"
     depends_on:
@@ -39,6 +41,21 @@ services:
         condition: service_healthy
     networks:
       - appnet
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    env_file:
+      - ./frontend/.env
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - appnet
+    # volumes:
+    #   - ./frontend:/app
 
 volumes:
   db_data:
